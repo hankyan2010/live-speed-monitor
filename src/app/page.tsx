@@ -19,9 +19,9 @@ interface Settings {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  threshold: 300,
+  threshold: 240,
   soundOn: true,
-  syllableRatio: 1.15,
+  syllableRatio: 1.05,
   peakAbsRatio: 1.8,
   minSyllableGapMs: 60,
   smoothAlpha: 0.35,

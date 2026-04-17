@@ -90,7 +90,7 @@ export class SyllableDetector {
       silenceResetMs: opts.silenceResetMs ?? 5000,
       windowMs: opts.windowMs ?? 10000,
       peakAbsRatio: opts.peakAbsRatio ?? 1.8,
-      syllableRatio: opts.syllableRatio ?? 1.15,
+      syllableRatio: opts.syllableRatio ?? 1.05,
       smoothAlpha: opts.smoothAlpha ?? 0.35,
     };
   }
