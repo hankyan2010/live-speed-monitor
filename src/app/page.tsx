@@ -19,13 +19,13 @@ interface Settings {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  threshold: 240,
+  threshold: 300,
   soundOn: true,
-  syllableRatio: 1.05,
-  peakAbsRatio: 1.8,
+  syllableRatio: 1.35,
+  peakAbsRatio: 1.4,
   minSyllableGapMs: 60,
-  smoothAlpha: 0.35,
-  windowMs: 10000,
+  smoothAlpha: 0.5,
+  windowMs: 3000,
   showDebug: true,
 };
 
