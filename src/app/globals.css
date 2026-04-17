@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+@keyframes flash {
+  0%, 100% { background-color: #000; }
+  50% { background-color: #7f1d1d; }
+}
+
+.alert-flash {
+  animation: flash 0.5s ease-in-out infinite;
+}
