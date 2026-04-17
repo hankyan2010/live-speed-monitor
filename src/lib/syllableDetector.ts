@@ -33,6 +33,14 @@ export interface SyllableDetectorCallbacks {
     silent: boolean;
     /** 当前瞬时音量 0-1，用于显示电平 */
     level: number;
+    /** 调试：当前噪声基线 */
+    noiseFloor: number;
+    /** 调试：最近一次检测到的峰值 env */
+    lastPeak: number;
+    /** 调试：最近一次检测到峰值时对应的峰谷比（peak/valley） */
+    lastRatio: number;
+    /** 调试：累计检测到的音节总数（从 start 开始） */
+    totalCount: number;
   }) => void;
   /** 出错回调（麦克风权限拒绝等） */
   onError?: (err: Error) => void;
@@ -65,6 +73,12 @@ export class SyllableDetector {
   private noiseFloor = 0.005;
   /** 当前 UI 电平 */
   private currentLevel = 0;
+  /** 调试：最近一次过峰的峰值 env */
+  private lastPeakEnv = 0;
+  /** 调试：最近一次过峰的峰谷比 */
+  private lastRatio = 0;
+  /** 调试：累计音节数 */
+  private totalCount = 0;
 
   private opts: Required<SyllableDetectorOptions>;
   private callbacks: SyllableDetectorCallbacks;
@@ -72,13 +86,18 @@ export class SyllableDetector {
   constructor(callbacks: SyllableDetectorCallbacks, opts: SyllableDetectorOptions = {}) {
     this.callbacks = callbacks;
     this.opts = {
-      minSyllableGapMs: opts.minSyllableGapMs ?? 70,
+      minSyllableGapMs: opts.minSyllableGapMs ?? 60,
       silenceResetMs: opts.silenceResetMs ?? 5000,
       windowMs: opts.windowMs ?? 10000,
-      peakAbsRatio: opts.peakAbsRatio ?? 2.0,
-      syllableRatio: opts.syllableRatio ?? 1.35,
+      peakAbsRatio: opts.peakAbsRatio ?? 1.8,
+      syllableRatio: opts.syllableRatio ?? 1.15,
       smoothAlpha: opts.smoothAlpha ?? 0.35,
     };
+  }
+
+  /** 运行时更新参数（允许部分更新） */
+  setOptions(partial: Partial<SyllableDetectorOptions>): void {
+    this.opts = { ...this.opts, ...partial } as Required<SyllableDetectorOptions>;
   }
 
   async start(): Promise<void> {
@@ -143,10 +162,14 @@ export class SyllableDetector {
     this.peak = 0;
     this.phase = "searching";
     this.lastPeakTime = 0;
+    this.totalCount = 0;
+    this.lastPeakEnv = 0;
+    this.lastRatio = 0;
   }
 
   reset(): void {
     this.syllableTimestamps = [];
+    this.totalCount = 0;
   }
 
   private loop = (): void => {
@@ -197,9 +220,12 @@ export class SyllableDetector {
         const passRatio = peakVal >= valleyVal * this.opts.syllableRatio;
         const passGap = now - this.lastPeakTime > this.opts.minSyllableGapMs;
 
+        this.lastPeakEnv = peakVal;
+        this.lastRatio = peakVal / Math.max(valleyVal, 1e-6);
         if (passAbs && passRatio && passGap) {
           this.syllableTimestamps.push(now);
           this.lastPeakTime = now;
+          this.totalCount++;
         }
         // 不管计没计数，进入下降阶段，重新追踪新谷
         this.phase = "falling";
@@ -233,6 +259,10 @@ export class SyllableDetector {
       windowCount,
       silent,
       level: this.currentLevel,
+      noiseFloor: this.noiseFloor,
+      lastPeak: this.lastPeakEnv,
+      lastRatio: this.lastRatio,
+      totalCount: this.totalCount,
     });
   }
 }
